@@ -1,7 +1,7 @@
 import {React, useEffect, useState} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faArrowUpWideShort, faArrowDownShortWide } from "@fortawesome/free-solid-svg-icons";
-import { Col, Container, Form, Row, Card, Table, Button } from "react-bootstrap";
+import { faEdit, faArrowUpWideShort, faArrowDownShortWide, faTrash, faMessage } from "@fortawesome/free-solid-svg-icons";
+import { Col, Container, Form, Row, Card, Table, Button, ToastContainer, Toast } from "react-bootstrap";
 import Select from 'react-select';
 import Pagination from 'react-bootstrap/Pagination';
 import { useForm } from "react-hook-form";
@@ -22,7 +22,8 @@ const CustomerSchema = yup.object({
         zipCode: yup.string().required("Zip Code is required.")
       })
   });
-export default function Customers(){
+export default function Customer(){
+    const notify = () => Toast("Wow so easy!");
     // register customer
     const [isExistingAddressSelected, setExistingAddressSelected] = useState(false);
     const [paginated, setPaginated] = useState(true)
@@ -40,8 +41,10 @@ export default function Customers(){
         setExistingAddressSelected(true)
     }
     const { register, handleSubmit, reset ,setValue , formState: { errors }, } = useForm({ mode: 'onBlur', resolver: yupResolver(CustomerSchema), });
-    const onSubmit = async (customer) => { axios.post(`${api}/customers`, customer)
-            .then(function (response) { console.log(response.data); reset(); fetchCustomers(); setSelectedAddress({})})
+    const onSubmit = async (customer) => { 
+        axios.post(`${api}/customers`, customer)
+            .then(function (response) {  
+                console.log(response.data); reset(); fetchCustomers(); setSelectedAddress({})})
             .catch(function (error) { console.log(error);reset();});
       };
       useEffect(() => { fetchAddresses()}, []);
@@ -78,7 +81,7 @@ export default function Customers(){
 
     // update Customer
     const handerEditCustomer = ((id) => {
-        console.log("Customer ID: ", id);
+        // console.log("Customer ID: ", id);
         const customerToBeUpdated = allCustomers?.content?.find((customer) => {
             return customer.id === id;
         });
@@ -91,8 +94,14 @@ export default function Customers(){
         setButtonLabel("Update Recored")
     });
 
+    const handleDeleteCustomer = (id) => {
+        axios
+        .delete(`${api}/customers/${id}`, response=> console.log("Delete Response: ",response))
+        .then("Then Response: ", response => console.log(response))
+        .catch(response => console.info(response));
+    }
     const handleClearFormButton = () => {
-        setButtonLabel("Register Recored")
+        setButtonLabel("Register Record")
         setExistingAddressSelected(false)
         setSelectedAddress({})
     }
@@ -228,9 +237,10 @@ export default function Customers(){
                             <Button id="submit_button" variant="primary" size="sm" type="submit">
                                 { buttonLabel }
                             </Button>
-                            <Button variant="danger" size="sm" type="reset" onClick={handleClearFormButton}>
+                            <Button variant="danger" size="sm" type="reset" onClick={ handleClearFormButton }>
                                 Clear Form
                             </Button>
+                            
                         </div>
                     </Form>
                 </Card>
@@ -281,16 +291,24 @@ export default function Customers(){
                                 </address>
                                 </td>
                                 <td>
-                                    <Button className="btn btn-secondary" 
+                                    <Button className="btn btn-link" 
                                         onClick={() => handerEditCustomer(customer.id)}>
                                             <FontAwesomeIcon icon={faEdit}/>
-                                    </Button></td>
+                                    </Button>
+                                    <Button className="btn btn-link"
+                                        // onClick={handleDeleteCustomer(customer.id)}
+                                    >
+                                        <FontAwesomeIcon className="text-danger" icon={ faTrash } />
+                                    </Button>
+                                    
+                                </td>
                             </tr>
                             );
                         })
                         }
                     </tbody>
                     </Table>
+                    <button onClick={() => notify}>Notify</button>
                     {paginationBasic}
                 </Card>
             </Col>
